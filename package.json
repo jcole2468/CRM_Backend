@@ -1,0 +1,18 @@
+{
+  "name": "crm_backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jamal Coleman",
+  "license": "MIT",
+  "dependencies": {
+    "apollo-server": "^3.0.0",
+    "dotenv": "^10.0.0",
+    "graphql": "^15.5.1",
+    "mongoose": "^5.13.2",
+    "mongoose-unique-validator": "^2.0.3"
+  }
+}
