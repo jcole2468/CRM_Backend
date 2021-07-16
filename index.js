@@ -75,12 +75,18 @@ const typeDefs = gql`
 
   type Query {
     allClients: [Client!]
+    allQuotes: [Quote!]
+    allJobs: [Job!]
+    allInvoices: [Invoice!]
   }
 `
 
 const resolvers = {
   Query: {
     allClients: () => Client.find({}),
+    allQuotes: () => Quote.find({}),
+    allJobs: () => Job.find({}),
+    allInvoices: () => Invoice.find({})
   },
   Client: {
     address: async (root) => {
@@ -105,6 +111,18 @@ const resolvers = {
       const invoices = await Invoice.find({ client: root._id })
       return invoices
     }
+  },
+  Quote: {
+    client: (root) => Client.findById(root.client)
+  },
+  Job: {
+    quote: (root) => Quote.findById(root.quote),
+    client: (root) => Client.findById(root.client)
+  },
+  Invoice: {
+    
+    job: (root) => Job.findById(root.job),
+    client: (root) => Client.findById(root.client)
   }
 }
 
