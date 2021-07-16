@@ -4,6 +4,18 @@ const schema = new mongoose.Schema({
   date_sent: {
     type: String,
   },
+  scope: [
+    {
+      type: String
+    }
+  ],
+  total: {
+    type: String
+  },
+  client: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Client'
+  },
   job: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Job'

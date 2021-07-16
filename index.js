@@ -6,9 +6,9 @@ const mongoose = require('mongoose')
 const Client = require('./models/client')
 const Address = require('./models/address')
 const Quote = require('./models/quote')
-// const Job = require('./models/job')
-// const Invoice = require('./models/invoice')
-// const User = require('./models/user')
+const Job = require('./models/job')
+const Invoice = require('./models/invoice')
+const User = require('./models/user')
 
 const MongoUrl = process.env.MONGODB_URI
 
@@ -28,8 +28,10 @@ const typeDefs = gql`
     phone: String
     email: String
     tags: [String]
+    quotes: [Quote]
     address: Address
-    quote: [Quote]
+    jobs: [Job]
+    invoices: [Invoice]
   }
 
   type Address {
@@ -47,6 +49,30 @@ const typeDefs = gql`
       client: Client
     }
 
+  type Job {
+    description: String
+    scope: [String]
+    total: String
+    user: User
+    notes: String
+    quote: Quote
+    client: Client
+  }
+
+  type Invoice {
+    date_sent: String
+    scope: [String]
+    total: String
+    job: Job
+    notes: [String]
+    client: Client
+  }
+
+  type User {
+      name: String
+      email: String
+  }
+
   type Query {
     allClients: [Client!]
   }
@@ -59,7 +85,6 @@ const resolvers = {
   Client: {
     address: async (root) => {
       const address = await Address.findById(root.address)
-      console.log(address)
 
       return {
         street: address.street,
@@ -68,9 +93,17 @@ const resolvers = {
         zip: address.zip
       }
     },
-    quote: async (root) => {
-      const quotes = await Quote.find({ client: root._id})
+    quotes: async (root) => {
+      const quotes = await Quote.find({ client: root._id })
       return quotes
+    },
+    jobs: async (root) => {
+      const jobs = await Job.find({ client: root._id })
+      return jobs
+    },
+    invoices: async (root) => {
+      const invoices = await Invoice.find({ client: root._id })
+      return invoices
     }
   }
 }

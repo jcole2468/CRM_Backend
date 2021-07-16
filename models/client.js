@@ -29,18 +29,18 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Address'
   },
-  // jobs: [
-  //   {
-  //     type: mongoose.Schema.Types.ObjectId,
-  //     ref: 'Job'
-  //   }
-  // ],
-  // invoices: [
-  //   {
-  //     type: mongoose.Schema.Types.ObjectId,
-  //     ref: 'Invoice'
-  //   }
-  // ]
+  jobs: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Job'
+    }
+  ],
+  invoices: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Invoice'
+    }
+  ]
 })
 
 schema.plugin(uniqueValidator)
