@@ -1,6 +1,7 @@
 require('dotenv').config()
-
 const { ApolloServer, UserInputError, AuthenticationError, gql } = require('apollo-server')
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 
 const mongoose = require('mongoose')
 const Client = require('./models/client')
@@ -10,6 +11,8 @@ const Quote = require('./models/quote')
 const Job = require('./models/job')
 const Invoice = require('./models/invoice')
 const User = require('./models/user')
+
+const JWT_SECRET = process.env.SECRET
 
 const MongoUrl = process.env.MONGODB_URI
 
@@ -70,7 +73,7 @@ const typeDefs = gql`
     scope: [String]
     total: String
     user: User
-    notes: String
+    notes: [String]
     quote: Quote
     client: Client
     id: ID!
@@ -87,9 +90,13 @@ const typeDefs = gql`
   }
 
   type User {
-      name: String
-      email: String
+      name: String!
+      email: String!
       id: ID!
+  }
+
+  type Token {
+    value: String!
   }
 
   type Query {
@@ -98,6 +105,7 @@ const typeDefs = gql`
     allQuotes: [Quote!]
     allJobs: [Job!]
     allInvoices: [Invoice!]
+    me: User
   }
 
   type Mutation {
@@ -144,6 +152,15 @@ const typeDefs = gql`
       client: String
       notes: [String]
     ): Job
+    createUser(
+      name: String!
+      email: String!
+      password: String!
+    ): User
+    login(
+      email: String!
+      password: String!
+    ): Token
   }
 `
 
@@ -153,7 +170,10 @@ const resolvers = {
     allAppointments: () => Appointment.find({}),
     allQuotes: () => Quote.find({}),
     allJobs: () => Job.find({}),
-    allInvoices: () => Invoice.find({})
+    allInvoices: () => Invoice.find({}),
+    me: (root, args, context) => {
+      return context.currentUser
+    }
   },
   Client: {
     address: async (root) => {
@@ -199,7 +219,13 @@ const resolvers = {
     client: (root) => Client.findById(root.client)
   },
   Mutation: {
-    addClient: async (root, args) => {
+    addClient: async (root, args, context) => {
+      const currentUser = context.currentUser
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
+
       const address = new Address({
         street: args.street,
         city: args.city,
@@ -224,7 +250,13 @@ const resolvers = {
         })
       }
     },
-    addAppointment: async (root, args) => {
+    addAppointment: async (root, args, context) => {
+      const currentUser = context.currentUser
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
+
       const client = await Client.findOne({ name: args.client })
       console.log(client)
       const newAppointment = new Appointment({ 
@@ -245,7 +277,14 @@ const resolvers = {
         })
       }
     },
-    addQuote: async (root, args) => {
+    addQuote: async (root, args, context) => {
+      const currentUser = context.currentUser
+      console.log(context)
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
+
       const client = await Client.findOne({ name: args.client })
       const newInvoice = new Quote({ 
         description: args.description,
@@ -264,7 +303,13 @@ const resolvers = {
         })
       }
     },
-    addJob: async (root, args) => {
+    addJob: async (root, args, context) => {
+      const currentUser = context.currentUser
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
+
       const client = await Client.findOne({ name: args.client })
       const newJob = new Job({ 
         title: args.title,
@@ -285,7 +330,13 @@ const resolvers = {
         })
       }
     },
-    addInvoice: async (root, args) => {
+    addInvoice: async (root, args, context) => {
+      const currentUser = context.currentUser
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
+
       const client = await Client.findOne({ name: args.client })
       const newInvoice = new Invoice({ 
         date_sent: args.date_sent,
@@ -303,13 +354,59 @@ const resolvers = {
           invalidArgs: args,
         })
       }
+    },
+    createUser: async (root, args) => {
+
+      const user = new User({ 
+        name: args.name,
+        email: args.email,
+        password: args.password,
+      })
+  
+      try {
+        await user.save()
+        return user
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+    },
+    login: async (root, args) => {
+      const user = await User.findOne({ email: args.email })
+      console.log(args, user.password)
+      const passwordCorrect = user === null
+        ? false
+        : await bcrypt.compare(args.password, user.password)
+
+      if (!(user && passwordCorrect)) {
+        throw new UserInputError("wrong credentials")
+      }
+
+      const userForToken = {
+        email: user.email,
+        id: user._id,
+      }
+
+      return { value: jwt.sign(userForToken, JWT_SECRET)}
     }
   }
 }
 
 const server = new ApolloServer({
   typeDefs,
-  resolvers
+  resolvers,
+  context: async ({ req }) => {
+    const auth = req ? req.headers.authorization : null
+    if (auth && auth.toLowerCase().startsWith('bearer')) {
+      const decodedToken = jwt.verify(
+        auth.substring(7), JWT_SECRET
+      )
+      const currentUser = await User.findById(decodedToken.id)
+      return { currentUser }
+    }
+  }
+
 })
 
 server.listen({ port: process.env.PORT || 4000 }).then(({ url }) => {
