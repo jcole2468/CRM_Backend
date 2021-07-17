@@ -49,7 +49,6 @@ const typeDefs = gql`
     title: String
     details: String
     request_date: String
-    app_time: String
     requested_on: String
     notes: [String]
     user: User
@@ -113,14 +112,30 @@ const typeDefs = gql`
       zip: String
     ): Client
     addAppointment(
-      title: String
-      details: String
-      request_date: String
-      requested_on: String
-      app_time: String
+      description: String
+      scope: String
+      total: String
+      requested_on: String 
       notes: [String]
       client: String
     ): Appointment
+    addQuote(
+      description: String
+      scope: [String]
+      total: String
+      notes: String
+      client: String
+    ): Quote
+    addInvoice(
+      title: String
+      description: String
+      scope: [String] 
+      total: String 
+      quote: String
+      client: String
+      user: String
+      notes: [String]
+    ): Invoice
   }
 `
 
@@ -205,10 +220,10 @@ const resolvers = {
       const client = await Client.findOne({ name: args.client })
       console.log(client)
       const newAppointment = new Appointment({ 
-        title: args.title,
-        details: args.details,
-        request_date: args.request_date,
-        app_time: args.app_time,
+        description: args.description,
+        scope: args.scope,
+        total: args.total,
+        notes: args.notes,
         requested_on: args.requested_on,
         client: client._id 
       })
@@ -216,6 +231,65 @@ const resolvers = {
       try {
         await newAppointment.save()
         return newAppointment
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+    },
+    addQuote: async (root, args) => {
+      const client = await Client.findOne({ name: args.client })
+      const newInvoice = new Quote({ 
+        description: args.description,
+        scope: args.scope,
+        total: args.total,
+        notes: args.notes,
+        client: client._id 
+      })
+      console.log(newInvoice)
+      try {
+        await newInvoice.save()
+        return newInvoice
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+    },
+    addJob: async (root, args) => {
+      const client = await Client.findOne({ name: args.client })
+      const newJob = new Job({ 
+        title: args.title,
+        description: args.description,
+        scope: args.scope,
+        total: args.total,
+        notes: args.notes,
+        user: args.user,
+        client: client._id
+      })
+      console.log(newJob)
+      try {
+        await newJob.save()
+        return newJob
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+    },
+    addInvoice: async (root, args) => {
+      const client = await Client.findOne({ name: args.client })
+      const newInvoice = new Invoice({ 
+        date_sent: args.date_sent,
+        scope: args.scope,
+        total: args.total,
+        notes: args.notes,
+        client: client._id 
+      })
+      console.log(newInvoice)
+      try {
+        await newInvoice.save()
+        return newInvoice
       } catch (error) {
         throw new UserInputError(error.message, {
           invalidArgs: args,
