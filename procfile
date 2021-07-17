@@ -1,1 +1,3 @@
 web: node index.js
+
+MONGODB_URI=mongodb+srv://fullstack:fCwS80It63Jv@cluster0.mf684.mongodb.net/Crm-App?retryWrites=true&w=majority
