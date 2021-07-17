@@ -143,7 +143,7 @@ const typeDefs = gql`
       total: String
       client: String
       notes: [String]
-    )
+    ): Job
   }
 `
 
