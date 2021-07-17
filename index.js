@@ -136,6 +136,14 @@ const typeDefs = gql`
       user: String
       notes: [String]
     ): Invoice
+    addJob(
+      title: String
+      description: String
+      scope: [String]
+      total: String
+      client: String
+      notes: [String]
+    )
   }
 `
 
