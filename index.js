@@ -120,11 +120,12 @@ const typeDefs = gql`
       zip: String
     ): Client
     addAppointment(
-      description: String
-      scope: String
-      total: String
+      title: String
+      details: String
+      request_date: String
       requested_on: String 
       notes: [String]
+      user: User
       client: String
     ): Appointment
     addQuote(
@@ -152,6 +153,38 @@ const typeDefs = gql`
       client: String
       notes: [String]
     ): Job
+    updateClient(
+      name: String!
+      phone: String
+      email: String
+      tags: [String]
+    ): Client
+    updateAppointment(
+      id: ID!
+      title: String
+      details: String
+      request_date: String
+      notes: [String]
+    ): Appointment
+    updateQuote(
+      id: ID!
+      description: String
+      scope: [String]
+      total: String
+      notes: String
+    ): Quote
+    updateJob(
+      id: ID!
+      description: String
+      scope: [String]
+      total: String
+      notes: [String]
+    ): Job
+    updateInvoice(
+      id: ID!
+      scope: [String]
+      total: String
+    ): Invoice
     createUser(
       name: String!
       email: String!
@@ -258,13 +291,14 @@ const resolvers = {
       }
 
       const client = await Client.findOne({ name: args.client })
-      console.log(client)
+
       const newAppointment = new Appointment({ 
-        description: args.description,
-        scope: args.scope,
-        total: args.total,
-        notes: args.notes,
+        title: args.title,
+        details: args.details,
+        request_date: args.request_date,
         requested_on: args.requested_on,
+        notes: args.notes,
+        user: args.user,
         client: client._id 
       })
       console.log(newAppointment)
@@ -349,6 +383,181 @@ const resolvers = {
       try {
         await newInvoice.save()
         return newInvoice
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+    },
+    updateClient: async (root, args, context) => {
+      const currentUser = context.currentUser
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
+
+      const client = await Client.findOne({ name: args.name })
+
+      if (!client) {
+        throw new UserInputError( error.message, {
+          invalidArgs: args,
+        })
+      }
+      if (args.name !== undefined) {
+        client.name = args.name
+      }
+      if (args.phone !== undefined) {
+        client.phone = args.phone
+      }
+      if (args.email !== undefined) {
+        client.email = args.email
+      }
+      if (args.tags !== undefined) {
+        client.tags = args.tags
+      }
+      
+      try {
+        await client.save()
+        return client
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+    },
+    updateAppointment: async (root, args, context) => {
+      const currentUser = context.currentUser
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
+
+      const appointment = await Appointment.findById(args.id)
+
+      if (!appointment) {
+        throw new UserInputError( error.message, {
+          invalidArgs: args,
+        })
+      }
+      if (args.title !== undefined) {
+        appointment.title = args.title
+      }
+      if (args.details !== undefined) {
+        appointment.details = args.details
+      }
+      if (args.request_date !== undefined) {
+        appointment.request_date = args.request_date
+      }
+      if (args.notes !== undefined) {
+        appointment.notes = args.notes
+      }
+      
+      try {
+        await appointment.save()
+        return appointment
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+    },
+    updateQuote: async (root, args, context) => {
+      const currentUser = context.currentUser
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
+
+      const quote = await Quote.findById(args.id)
+
+      if (!quote) {
+        throw new UserInputError( error.message, {
+          invalidArgs: args,
+        })
+      }
+      if (args.description !== undefined) {
+        quote.description = args.description
+      }
+      if (args.scope !== undefined) {
+        quote.scope = args.scope
+      }
+      if (args.total !== undefined) {
+        quote.total = args.total
+      }
+      if (args.notes !== undefined) {
+        quote.notes = args.notes
+      }
+      
+      try {
+        await quote.save()
+        return quote
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+    },
+    updateJob: async (root, args, context) => {
+      const currentUser = context.currentUser
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
+
+      const job = await Job.findById(args.id)
+
+      if (!job) {
+        throw new UserInputError( error.message, {
+          invalidArgs: args,
+        })
+      }
+
+      if (args.description !== undefined) {
+        job.description = args.description
+      }
+      if (args.scope !== undefined) {
+        job.scope = args.scope
+      }
+      if (args.total !== undefined) {
+        job.total = args.total
+      }
+      if (args.notes !== undefined) {
+        job.notes = args.notes
+      }
+      
+      try {
+        await job.save()
+        return job
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+    },
+    updateInvoice: async (root, args, context) => {
+      const currentUser = context.currentUser
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
+
+      const invoice = await Invoice.findById(args.invoice)
+
+      if (!invoice) {
+        throw new UserInputError( error.message, {
+          invalidArgs: args,
+        })
+      }
+      if (args.scope !== undefined) {
+        invoice.scope = args.scope
+      }
+      if (args.total !== undefined) {
+        invoice.total = args.total
+      }
+      
+      try {
+        await invoice.save()
+        return invoice
       } catch (error) {
         throw new UserInputError(error.message, {
           invalidArgs: args,
