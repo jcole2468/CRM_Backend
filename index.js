@@ -125,7 +125,7 @@ const typeDefs = gql`
       request_date: String
       requested_on: String 
       notes: [String]
-      user: User
+      user: String
       client: String
     ): Appointment
     addQuote(
@@ -291,6 +291,7 @@ const resolvers = {
       }
 
       const client = await Client.findOne({ name: args.client })
+      const user = await User.findOne({ name: args.user })
 
       const newAppointment = new Appointment({ 
         title: args.title,
@@ -298,7 +299,7 @@ const resolvers = {
         request_date: args.request_date,
         requested_on: args.requested_on,
         notes: args.notes,
-        user: args.user,
+        user: user,
         client: client._id 
       })
       console.log(newAppointment)
